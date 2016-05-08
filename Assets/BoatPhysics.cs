@@ -5,8 +5,12 @@ using System.Collections;
 
 public class BoatPhysics : MonoBehaviour
 {
+    //controls
+    public bool Slam = false;
 
     public GameObject UnderwaterMeshOBJ;
+    public GameObject WaterPlane;
+    private DynamicWater water;
 
     private Mesh BoatMesh;
 
@@ -24,6 +28,7 @@ public class BoatPhysics : MonoBehaviour
     {
         UnderWaterMesh = UnderwaterMeshOBJ.GetComponent<MeshFilter>().mesh;
         BoatMesh = this.GetComponent<MeshFilter>().mesh;
+        water = WaterPlane.GetComponent<DynamicWater>();
 
         originalVerticesArray = BoatMesh.vertices;
         originalTrianglesArray = BoatMesh.triangles;
@@ -31,6 +36,8 @@ public class BoatPhysics : MonoBehaviour
         boatRB = this.GetComponent<Rigidbody>();
 
         boatRB.maxAngularVelocity = 0.5f;
+
+
     }
 
     void Update()
@@ -49,6 +56,8 @@ public class BoatPhysics : MonoBehaviour
     private void AddForcesToBoat()
     {
         int i = 0;
+        float totalArea = 0f;
+
         while (i < underwaterTriangles.Count)
         {
             //get positions of 3 vertices per triangle
@@ -80,8 +89,19 @@ public class BoatPhysics : MonoBehaviour
             float area_heron = Mathf.Sqrt(s*(s - a)*(s - b)*(s - c));
             float area = area_heron;
 
+            Vector3 triVelocity = GetTriangleVelocity(boatRB, centerPoint);
+
             AddBuoyancy(distance_to_surface,area,crossProduct,centerPoint);
+            if (Slam)
+            {
+                AddPrimitiveSlamForce(new Vector3(0f,triVelocity.y,0f), area, centerPoint);
+            }
         }
+    }
+
+    private void AddPrimitiveSlamForce(Vector3 triVelocity, float area, Vector3 centerPoint)
+    {
+        boatRB.AddForceAtPosition(-triVelocity*area,centerPoint);
     }
 
     private void AddBuoyancy(float distance_to_surface, float area, Vector3 crossProduct, Vector3 centerPoint)
@@ -329,10 +349,31 @@ public class BoatPhysics : MonoBehaviour
     public float? DistanceToWater(Vector3 position)
     {
         Vector3 globalVerticePosition = transform.TransformPoint(position);
-        float? y_pos = 0f;
+        float? y_pos = water.WaterArray[(int)globalVerticePosition.x*10,(int)globalVerticePosition.z*10].position.y;
         return globalVerticePosition.y - y_pos;
     }
+
+    public Vector3 GetTriangleVelocity(Rigidbody boatRB, Vector3 triangleCenter)
+    {
+        //The connection formula for velocities
+        // v_A = v_B + omega_B cross r_BA
+        // v_A - velocity in point A
+        // v_B - velocity in point B
+        // omega_B - angular velocity in point B
+        // r_BA - vector between A and B
+
+        Vector3 v_B = boatRB.velocity;
+
+        Vector3 omega_B = boatRB.angularVelocity;
+
+        Vector3 r_BA = triangleCenter - boatRB.worldCenterOfMass;
+
+        Vector3 v_A = v_B + Vector3.Cross(omega_B, r_BA);
+
+        return v_A;
+    }
 }
+
 
 
 /// <summary>
