@@ -6,6 +6,7 @@ public class DynamicWater : MonoBehaviour {
     public Transform WaterPiece;
     public int Multiplier = 0;
     public float Speed = 0;
+    public int DampenAmplitude = 1;
     public float[,] PerlinOffset = new float[100, 100];
     public Transform[,] WaterArray =new Transform[100,100];
     private int offset = 0;
@@ -64,7 +65,7 @@ public class DynamicWater : MonoBehaviour {
         {
             for (int j = 0; j < 100; j++)
             {
-                water[i,j].position = new Vector3(i/10f,PerlinOffset[i,j],j/10f);
+                water[i,j].position = new Vector3(i/10f,PerlinOffset[i,j]/DampenAmplitude,j/10f);
             }
         }
     }

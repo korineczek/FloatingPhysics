@@ -1,47 +1,41 @@
 fileFormatVersion: 2
-guid: 445700959f80d4645b51c31ba61aab50
-timeCreated: 1460104941
+guid: 72dd350c5f1f8cc46815473dd6c4bf20
+timeCreated: 1465146474
 licenseType: Free
 ModelImporter:
   serializedVersion: 19
   fileIDToRecycleName:
-    100000: //RootNode
-    100002: Cube
-    100004: Cube.001
-    100006: Cube.002
-    100008: Cube.003
-    100010: Cube.004
-    100012: Torus
-    100014: Torus.001
-    400000: //RootNode
-    400002: Cube
-    400004: Cube.001
-    400006: Cube.002
-    400008: Cube.003
-    400010: Cube.004
-    400012: Torus
-    400014: Torus.001
-    2300000: Cube
-    2300002: Cube.001
-    2300004: Cube.002
-    2300006: Cube.003
-    2300008: Cube.004
-    2300010: Torus
-    2300012: Torus.001
-    3300000: Cube
-    3300002: Cube.001
-    3300004: Cube.002
-    3300006: Cube.003
-    3300008: Cube.004
-    3300010: Torus
-    3300012: Torus.001
-    4300000: Torus.001
-    4300002: Cube.004
-    4300004: Cube.003
-    4300006: Cube.002
-    4300008: Torus
-    4300010: Cube.001
-    4300012: Cube
+    100000: Camera
+    100002: //RootNode
+    100004: Cannoe
+    100006: Cube
+    100008: Cube.001
+    100010: Cube.002
+    100012: Lamp
+    100014: Sphere
+    400000: Camera
+    400002: //RootNode
+    400004: Cannoe
+    400006: Cube
+    400008: Cube.001
+    400010: Cube.002
+    400012: Lamp
+    400014: Sphere
+    2300000: Cannoe
+    2300002: Cube
+    2300004: Cube.001
+    2300006: Cube.002
+    2300008: Sphere
+    3300000: Cannoe
+    3300002: Cube
+    3300004: Cube.001
+    3300006: Cube.002
+    3300008: Sphere
+    4300000: Cannoe
+    4300002: Cube.002
+    4300004: Cube.001
+    4300006: Cube
+    4300008: Sphere
   materials:
     importMaterials: 1
     materialName: 0

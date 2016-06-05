@@ -6,7 +6,17 @@ using System.Collections;
 public class BoatPhysics : MonoBehaviour
 {
     //controls
+    public bool DebugForce = false;
     public bool Slam = false;
+    public bool PressureDrag = false;
+    //pressure drag controls
+    public float CPD1 = 10;
+    public float CPD2 = 10;
+    public float vr = 1f;
+    public float fp = 2f;
+    public float CSD1 = 10;
+    public float CSD2 = 10;
+    public float fs = 2f;
 
     public GameObject UnderwaterMeshOBJ;
     public GameObject WaterPlane;
@@ -36,6 +46,7 @@ public class BoatPhysics : MonoBehaviour
         boatRB = this.GetComponent<Rigidbody>();
 
         boatRB.maxAngularVelocity = 0.5f;
+        boatRB.centerOfMass = new Vector3(0.5f,0,0);
 
 
     }
@@ -77,6 +88,7 @@ public class BoatPhysics : MonoBehaviour
             vertice_2_pos = transform.TransformPoint(vertice_2_pos);
             vertice_3_pos = transform.TransformPoint(vertice_3_pos);
 
+            //crossproduct is a normal to the triangle here
             Vector3 crossProduct = Vector3.Cross(vertice_2_pos - vertice_1_pos, vertice_3_pos - vertice_1_pos).normalized;
             //Debug.DrawRay(centerPoint,crossProduct * 1f,Color.red);
 
@@ -96,7 +108,32 @@ public class BoatPhysics : MonoBehaviour
             {
                 AddPrimitiveSlamForce(new Vector3(0f,triVelocity.y,0f), area, centerPoint);
             }
+            if (PressureDrag)
+            {
+                //calculate CosTheta to see if a triangle is submerging or emerging
+                float cosTheta = Vector3.Dot(triVelocity, crossProduct);
+                AddPressureDragForce(centerPoint,cosTheta,triVelocity.magnitude,area,crossProduct,CPD1,CPD2,CSD1,CSD2,vr,fp,fs);
+            }
         }
+    }
+
+    private void AddPressureDragForce(Vector3 centerPoint, float cosTheta, float vi, float area, Vector3 normal, float CPD1, float CPD2, float CSD1, float CSD2, float vr, float fp, float fs)
+    {
+        Vector3 pressureDrag = Vector3.zero;
+        if (cosTheta > 0)
+        {
+            pressureDrag = -(CPD1 * (vi / vr) + CPD2 * ((vi * vi) / (vr * vr))) * area * (Mathf.Pow(cosTheta, fp)) * normal;
+            boatRB.AddForceAtPosition(pressureDrag,centerPoint);
+            if (DebugForce) Debug.DrawRay(centerPoint, pressureDrag, Color.blue);
+        }
+        else
+        {
+            
+            pressureDrag = (CSD1 * (vi / vr) + CSD2 * ((vi * vi) / (vr * vr))) * area * (Mathf.Pow(Mathf.Abs(cosTheta), fs)) * normal;
+            boatRB.AddForceAtPosition(pressureDrag, centerPoint);
+            if (DebugForce) Debug.DrawRay(centerPoint, pressureDrag, Color.blue);
+             
+        }   
     }
 
     private void AddPrimitiveSlamForce(Vector3 triVelocity, float area, Vector3 centerPoint)
@@ -114,9 +151,9 @@ public class BoatPhysics : MonoBehaviour
         // n - normal to the surface
 
         Vector3 F = 1000f*Physics.gravity.y*distance_to_surface*area*crossProduct;
-        F = new Vector3(0f, F.y, 0f);
+        F = new Vector3(0f, (F.y), 0f);
         boatRB.AddForceAtPosition(F,centerPoint);
-        Debug.DrawRay(centerPoint,F/100,Color.red);
+        if (DebugForce) Debug.DrawRay(centerPoint, F / 100, Color.red);
     }
 
     public void GenerateUnderwaterMesh()
