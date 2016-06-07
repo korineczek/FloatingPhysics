@@ -9,6 +9,7 @@ public class BoatPhysics : MonoBehaviour
     public bool DebugForce = false;
     public bool Slam = false;
     public bool PressureDrag = false;
+    public bool Viscous = false;
     //pressure drag controls
     public float CPD1 = 10;
     public float CPD2 = 10;
@@ -33,6 +34,7 @@ public class BoatPhysics : MonoBehaviour
     private List<int> underwaterTriangles;
 
     private Rigidbody boatRB;
+    private float resistanceCoefficient = 0f;
 
     void Start()
     {
@@ -54,6 +56,8 @@ public class BoatPhysics : MonoBehaviour
     void Update()
     {
         GenerateUnderwaterMesh();
+        resistanceCoefficient = GetResistanceCoefficient(1, boatRB.velocity.magnitude, UnderWaterMesh.bounds.size.x, 0.001f);
+        //Debug.Log(resistanceCoefficient);
     }
 
     void FixedUpdate()
@@ -62,6 +66,15 @@ public class BoatPhysics : MonoBehaviour
         {
             AddForcesToBoat();
         }
+    }
+
+    private float GetResistanceCoefficient(float rho, float velocity, float length, float mu)
+    {
+        //calculate reynolds number
+        float rn = (rho*velocity*length)/mu;
+        //calculate resistance coefficient for each time step
+        float cf = 0.075f/Mathf.Pow((Mathf.Log10(rn)) - 2, 2);
+        return cf;
     }
 
     private void AddForcesToBoat()
@@ -106,13 +119,18 @@ public class BoatPhysics : MonoBehaviour
             AddBuoyancy(distance_to_surface,area,crossProduct,centerPoint);
             if (Slam)
             {
-                AddPrimitiveSlamForce(new Vector3(0f,triVelocity.y,0f), area, centerPoint);
+                if(triVelocity.y != 0f)
+                AddPrimitiveSlamForce(triVelocity, centerPoint,crossProduct);
             }
             if (PressureDrag)
             {
                 //calculate CosTheta to see if a triangle is submerging or emerging
                 float cosTheta = Vector3.Dot(triVelocity, crossProduct);
-                AddPressureDragForce(centerPoint,cosTheta,triVelocity.magnitude,area,crossProduct,CPD1,CPD2,CSD1,CSD2,vr,fp,fs);
+                AddPressureDragForce(centerPoint,cosTheta,triVelocity.magnitude,area,crossProduct,CPD1,CPD2,CSD1,CSD2,boatRB.velocity.magnitude,fp,fs);
+            }
+            if (Viscous)
+            {
+                AddViscousResistance(resistanceCoefficient,crossProduct,triVelocity,1,area,centerPoint);
             }
         }
     }
@@ -136,9 +154,24 @@ public class BoatPhysics : MonoBehaviour
         }   
     }
 
-    private void AddPrimitiveSlamForce(Vector3 triVelocity, float area, Vector3 centerPoint)
+    private void AddViscousResistance(float Cf, Vector3 normal, Vector3 velocity, float rho, float area, Vector3 centerPoint)
     {
-        boatRB.AddForceAtPosition(-triVelocity*area,centerPoint);
+        //projection of the velocity on our triangle
+        Vector3 tangentialVelocity = Vector3.Cross(velocity, (Vector3.Cross(normal, velocity) / velocity.magnitude)) / velocity.magnitude;
+        //we apply the projection to the speed of the triangle
+        Vector3 vfi = velocity.magnitude*tangentialVelocity;
+        //calculate viscous resistance
+        Vector3 viscous = 0.5f*rho*Cf*area*vfi*vfi.magnitude;
+        boatRB.AddForceAtPosition(viscous, centerPoint);
+        if (DebugForce) Debug.DrawRay(centerPoint, viscous, Color.yellow);
+    }
+
+    private void AddPrimitiveSlamForce(Vector3 triVelocity, Vector3 centerPoint, Vector3 normal)
+    {
+        //Vector3 slam = -normal*triVelocity.magnitude*50;
+        Vector3 slam = -triVelocity*50;
+        boatRB.AddForceAtPosition(slam,centerPoint);
+        if (DebugForce) Debug.DrawRay(centerPoint, slam, Color.green);
     }
 
     private void AddBuoyancy(float distance_to_surface, float area, Vector3 crossProduct, Vector3 centerPoint)
