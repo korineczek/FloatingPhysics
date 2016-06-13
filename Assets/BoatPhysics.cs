@@ -141,7 +141,7 @@ public class BoatPhysics : MonoBehaviour
             }
             if (Viscous)
             {
-                AddViscousResistance(resistanceCoefficient,crossProduct,triVelocity,1,area,centerPoint);
+                AddViscousResistance(resistanceCoefficient,crossProduct,triVelocity,1000,area,centerPoint);
             }
         }
     }
