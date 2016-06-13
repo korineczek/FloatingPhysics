@@ -173,7 +173,7 @@ public class BoatPhysics : MonoBehaviour
         //projection of the velocity on our triangle
         Vector3 tangentialVelocity = Vector3.Cross(velocity, (Vector3.Cross(normal, velocity) / velocity.magnitude)) / velocity.magnitude;
         //we apply the projection to the speed of the triangle
-        Vector3 vfi = velocity.magnitude*tangentialVelocity;
+        Vector3 vfi = velocity.magnitude*(tangentialVelocity*-1f);
         //calculate viscous resistance
         Vector3 viscous = 0.5f*rho*Cf*area*vfi*vfi.magnitude;
         boatRB.AddForceAtPosition(viscous, centerPoint);    
